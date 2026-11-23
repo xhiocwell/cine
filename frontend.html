@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cine - Panel de Datos</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    header {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      padding: 24px 32px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+    }
+    header h1 { font-size: 28px; margin-bottom: 4px; }
+    header p { opacity: 0.9; font-size: 14px; }
+
+    .auth-bar {
+      background: #1e293b;
+      padding: 16px 24px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .auth-bar input {
+      padding: 10px 14px;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-size: 14px;
+      flex: 1;
+      min-width: 150px;
+    }
+    .auth-bar button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #6366f1;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .auth-bar button:hover { background: #4f46e5; }
+    .auth-status {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .auth-status.ok { background: #064e3b; color: #6ee7b7; }
+    .auth-status.no { background: #450a0a; color: #fca5a5; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      background: #1e293b;
+      color: #94a3b8;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: 0.2s;
+    }
+    .tab:hover { background: #334155; color: #e2e8f0; }
+    .tab.active {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+    }
+
+    .content {
+      background: #1e293b;
+      padding: 24px;
+      border-radius: 12px;
+      min-height: 400px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .toolbar h2 { font-size: 20px; }
+    .toolbar .btn-refresh {
+      padding: 8px 16px;
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .toolbar .btn-refresh:hover { background: #059669; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    table th {
+      background: #0f172a;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #94a3b8;
+      border-bottom: 2px solid #334155;
+    }
+    table td {
+      padding: 12px;
+      border-bottom: 1px solid #334155;
+    }
+    table tr:hover { background: #0f172a; }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-blue { background: #1e40af; color: #93c5fd; }
+    .badge-green { background: #065f46; color: #6ee7b7; }
+    .badge-purple { background: #581c87; color: #d8b4fe; }
+    .badge-yellow { background: #78350f; color: #fcd34d; }
+
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #64748b;
+      font-size: 15px;
+    }
+    .loading { text-align: center; padding: 40px; color: #6366f1; }
+    .error {
+      background: #450a0a;
+      color: #fca5a5;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    .json-preview {
+      background: #0f172a;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 8px;
+      max-height: 200px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🎬 Panel de Datos - Cine API</h1>
+  <p>Visualiza los datos de tu base de datos en tiempo real</p>
+</header>
+
+<div class="auth-bar">
+  <input type="email" id="email" placeholder="Email (admin@cine.com)" value="admin@cine.com">
+  <input type="password" id="password" placeholder="Contraseña" value="123456">
+  <button onclick="login()">🔐 Login</button>
+  <span id="authStatus" class="auth-status no">Sin autenticar</span>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="salas" onclick="cambiarTab('salas', this)">🎭 Salas</button>
+  <button class="tab" data-tab="generos" onclick="cambiarTab('generos', this)">🎭 Géneros</button>
+  <button class="tab" data-tab="peliculas" onclick="cambiarTab('peliculas', this)">🎥 Películas</button>
+  <button class="tab" data-tab="funciones" onclick="cambiarTab('funciones', this)">🎟️ Funciones</button>
+  <button class="tab" data-tab="clientes" onclick="cambiarTab('clientes', this)">👥 Clientes</button>
+  <button class="tab" data-tab="boletos" onclick="cambiarTab('boletos', this)">🎫 Boletos</button>
+</div>
+
+<div class="content" id="content">
+  <div class="loading">Cargando...</div>
+</div>
+
+<script>
+const API = 'http://localhost:3000';
+let token = null;
+let tabActual = 'salas';
+
+// ============ LOGIN ============
+async function login() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+
+  try {
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!res.ok) throw new Error('Credenciales inválidas');
+
+    const data = await res.json();
+    token = data.access_token;
+
+    document.getElementById('authStatus').textContent = '✅ Autenticado';
+    document.getElementById('authStatus').className = 'auth-status ok';
+    alert('✅ Login exitoso. Ya puedes usar los endpoints protegidos.');
+  } catch (err) {
+    document.getElementById('authStatus').textContent = '❌ Error';
+    document.getElementById('authStatus').className = 'auth-status no';
+    alert('❌ ' + err.message);
+  }
+}
+
+// ============ NAVEGACIÓN ============
+function cambiarTab(tab, btn) {
+  tabActual = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  cargarDatos();
+}
+
+// ============ CARGAR DATOS ============
+async function cargarDatos() {
+  const content = document.getElementById('content');
+  content.innerHTML = '<div class="loading">⏳ Cargando datos...</div>';
+
+  try {
+    const res = await fetch(`${API}/${tabActual}`);
+    if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+    const data = await res.json();
+
+    if (data.length === 0) {
+      content.innerHTML = `
+        <div class="toolbar">
+          <h2>${nombreTab(tabActual)} (0)</h2>
+          <button class="btn-refresh" onclick="cargarDatos()">🔄 Recargar</button>
+        </div>
+        <div class="empty">No hay datos en esta tabla</div>
+      `;
+      return;
+    }
+
+    content.innerHTML = `
+      <div class="toolbar">
+        <h2>${nombreTab(tabActual)} (${data.length})</h2>
+        <button class="btn-refresh" onclick="cargarDatos()">🔄 Recargar</button>
+      </div>
+      ${renderTabla(tabActual, data)}
+    `;
+  } catch (err) {
+    content.innerHTML = `
+      <div class="error">
+        <strong>❌ Error:</strong> ${err.message}<br>
+        <small>Verifica que la API esté corriendo en ${API}</small>
+      </div>
+    `;
+  }
+}
+
+function nombreTab(tab) {
+  const nombres = {
+    salas: 'Salas', generos: 'Géneros', peliculas: 'Películas',
+    funciones: 'Funciones', clientes: 'Clientes', boletos: 'Boletos',
+  };
+  return nombres[tab] || tab;
+}
+
+// ============ RENDERIZAR TABLAS ============
+function renderTabla(tab, data) {
+  if (tab === 'salas') {
+    return `<table>
+      <thead><tr><th>ID</th><th>Nombre</th><th>Capacidad</th><th>Tipo</th><th>Funciones</th></tr></thead>
+      <tbody>
+        ${data.map(s => `<tr>
+          <td><strong>#${s.idSala}</strong></td>
+          <td>${s.nombre}</td>
+          <td>${s.capacidad} asientos</td>
+          <td><span class="badge badge-blue">${s.tipo}</span></td>
+          <td>${s.funciones ? s.funciones.length : '-'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  if (tab === 'generos') {
+    return `<table>
+      <thead><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Películas</th></tr></thead>
+      <tbody>
+        ${data.map(g => `<tr>
+          <td><strong>#${g.idGenero}</strong></td>
+          <td><span class="badge badge-purple">${g.nombre}</span></td>
+          <td>${g.descripcion}</td>
+          <td>${g.peliculas ? g.peliculas.length : '-'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  if (tab === 'peliculas') {
+    return `<table>
+      <thead><tr><th>ID</th><th>Título</th><th>Duración</th><th>Clasificación</th><th>Géneros</th></tr></thead>
+      <tbody>
+        ${data.map(p => `<tr>
+          <td><strong>#${p.idPelicula}</strong></td>
+          <td><strong>${p.titulo}</strong><br><small style="color:#64748b">${p.sinopsis}</small></td>
+          <td>${p.duracionMin} min</td>
+          <td><span class="badge badge-yellow">${p.clasificacion}</span></td>
+          <td>${(p.generos || []).map(g => `<span class="badge badge-purple">${g.nombre}</span>`).join(' ') || '-'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  if (tab === 'funciones') {
+    return `<table>
+      <thead><tr><th>ID</th><th>Película</th><th>Sala</th><th>Fecha y hora</th><th>Precio</th></tr></thead>
+      <tbody>
+        ${data.map(f => `<tr>
+          <td><strong>#${f.idFuncion}</strong></td>
+          <td>${f.pelicula ? f.pelicula.titulo : '-'}</td>
+          <td>${f.sala ? f.sala.nombre : '-'}</td>
+          <td>${f.fechaHora ? new Date(f.fechaHora).toLocaleString('es-MX') : '-'}</td>
+          <td><span class="badge badge-green">$${Number(f.precio).toFixed(2)}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  if (tab === 'clientes') {
+    return `<table>
+      <thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Boletos</th></tr></thead>
+      <tbody>
+        ${data.map(c => `<tr>
+          <td><strong>#${c.idCliente}</strong></td>
+          <td>${c.nombres} ${c.paterno} ${c.materno}</td>
+          <td>${c.email}</td>
+          <td>${c.boletos ? c.boletos.length : '-'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  if (tab === 'boletos') {
+    return `<table>
+      <thead><tr><th>ID</th><th>Función</th><th>Cliente</th><th>Asiento</th><th>Precio pagado</th></tr></thead>
+      <tbody>
+        ${data.map(b => `<tr>
+          <td><strong>#${b.idBoleto}</strong></td>
+          <td>${b.funcion ? `#${b.funcion.idFuncion}` : `#${b.idFuncion}`}</td>
+          <td>${b.cliente ? `${b.cliente.nombres} ${b.cliente.paterno}` : `#${b.idCliente}`}</td>
+          <td><span class="badge badge-blue">${b.numeroAsiento}</span></td>
+          <td><span class="badge badge-green">$${Number(b.precioPagado).toFixed(2)}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  return '<div class="empty">Tabla desconocida</div>';
+}
+
+// Cargar al abrir
+cargarDatos();
+</script>
+
+</body>
+</html>
